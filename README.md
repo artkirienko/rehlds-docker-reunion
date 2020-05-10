@@ -1,9 +1,9 @@
-[![GitHub Actions Docker Image CI](https://github.com/artkirienko/hlds-docker-dproto/workflows/Docker%20Image%20CI/badge.svg)](https://github.com/artkirienko/hlds-docker-dproto/actions)
-[![HitCount](http://hits.dwyl.com/artkirienko/hlds-docker-dproto.svg)](http://hits.dwyl.com/artkirienko/hlds-docker-dproto)
+[![GitHub Actions Docker Image CI](https://github.com/artkirienko/rehlds-docker-reunion/workflows/Docker%20Image%20CI/badge.svg)](https://github.com/artkirienko/rehlds-docker-reunion/actions)
+[![HitCount](http://hits.dwyl.com/artkirienko/rehlds-docker-reunion.svg)](http://hits.dwyl.com/artkirienko/rehlds-docker-reunion)
 
 ![banner](banner.png)
 
-# HLDS Docker dproto(47/48 Steam+noSteam)
+# reHLDS Docker reunion(47/48 Steam+noSteam)
 
 ## Half-Life Dedicated Server as a Docker image
 
@@ -18,35 +18,40 @@ this image.
 Start a new server by running:
 
 ```bash
-docker run -it --rm -d -p27015:27015 -p27015:27015/udp artkirienko/hlds
+docker run -it --rm -d -p27015:27015 -p27015:27015/udp artkirienko/rehlds
 ```
 
 Change the player slot size, map or `rcon_password` by running:
 
 ```
-docker run -it --rm -d --name hlds -p27015:27015 -p27015:27015/udp artkirienko/hlds +map crossfire +maxplayers 12 +rcon_password SECRET_PASSWORD
+docker run -it --rm -d --name hlds -p27015:27015 -p27015:27015/udp artkirienko/rehlds +map crossfire +maxplayers 12 +rcon_password SECRET_PASSWORD
 ```
 
 > **Note:** Any [server config command](http://sr-team.clan.su/K_stat/hlcommandsfull.html)
-  can be passed by using `+`. But it has to follow after the image name `artkirienko/hlds`.
+  can be passed by using `+`. But it has to follow after the image name `artkirienko/rehlds`.
 
 ## What is included
 
-* [HLDS Build](https://github.com/DevilBoy-eXe/hlds) `7882`. This is the last
-  known version that is compatible with last version of **dproto** that's `0.9.582`
+* Latest game assets via **SteamCMD**
+* [Reverse-engineered HLDS](https://github.com/dreamstalker/rehlds) version `3.7.0.695-dev`
 
   ```
-  Protocol version 47/48
+  Protocol version 48
   Exe version 1.1.2.2/Stdio (valve)
-  Exe build: 17:23:32 May 24 2018 (7882)
+  ReHLDS version: 3.7.0.695-dev
+  Build date: 15:54:29 Apr  6 2020 (2186)
+  Build from: https://github.com/dreamstalker/rehlds/commit/7513e71
   ```
 
-* [Metamod-p](https://github.com/Bots-United/metamod-p) version `1.21p38`
+* [Metamod-r](https://github.com/theAsmodai/metamod-r) version `1.3.0.128`
 
-* [AMX Mod X](https://github.com/alliedmodders/amxmodx) version `1.8.2`
+* [AMX Mod X](https://github.com/alliedmodders/amxmodx) version `1.9.0 build 5263`
+  (development build, ReHLDS support)
 
-* **dproto** version `0.9.582`. This is the last version of **dproto**,
-  the project is abandoned.
+* **reunion** version `0.1.0.92c`
+
+* [revoice](https://github.com/s1lentq/revoice/) latest build. Voice transcoder
+  which fixes voice chat between non-steam and steam clients (for ReHLDS).
 
 * [jk_botti](https://github.com/Bots-United/jk_botti) version `1.43`
 
@@ -78,5 +83,5 @@ to `valve/config/server.cfg` of this project and mount the directory as volume
 to `/opt/steam/hlds/valve/config` by running:
 
 ```bash
-docker run -it --rm -d -p27015:27015 -p27015:27015/udp -v $(pwd)/valve/config:/opt/steam/hlds/valve/config artkirienko/hlds
+docker run -it --rm -d -p27015:27015 -p27015:27015/udp -v $(pwd)/valve/config:/opt/steam/hlds/valve/config artkirienko/rehlds
 ```

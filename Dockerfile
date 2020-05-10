@@ -1,13 +1,13 @@
 FROM debian:buster-slim
 
-ARG hlds_build=7882
-ARG metamod_version=1.21p38
-ARG amxmod_version=1.8.2
+ARG rehlds_version=3.7.0.695
+ARG metamod_version=1.3.0.128
 ARG jk_botti_version=1.43
 ARG steamcmd_url=https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz
-ARG hlds_url="https://github.com/DevilBoy-eXe/hlds/releases/download/$hlds_build/hlds_build_$hlds_build.zip"
-ARG metamod_url="https://github.com/Bots-United/metamod-p/releases/download/v$metamod_version/metamod_i686_linux_win32-$metamod_version.tar.xz"
-ARG amxmod_url="http://www.amxmodx.org/release/amxmodx-$amxmod_version-base-linux.tar.gz"
+ARG rehlds_url="https://github.com/dreamstalker/rehlds/releases/download/$rehlds_version/rehlds-dist-$rehlds_version-dev.zip"
+ARG metamod_url="https://github.com/theAsmodai/metamod-r/releases/download/1.3.128/metamod_$metamod_version.zip"
+ARG amxmod_url="https://www.amxmodx.org/amxxdrop/1.9/amxmodx-1.9.0-git5263-base-linux.tar.gz"
+ARG revoice_url="https://teamcity.rehlds.org/guestAuth/downloadArtifacts.html?buildTypeId=Revoice_Publish&buildId=lastSuccessful"
 ARG jk_botti_url="http://koti.kapsi.fi/jukivili/web/jk_botti/jk_botti-$jk_botti_version-release.tar.xz"
 
 # Fix warning:
@@ -45,11 +45,6 @@ COPY ./lib/hlds.install /opt/steam
 RUN curl -sL "$steamcmd_url" | tar xzvf - \
     && ./steamcmd.sh +runscript hlds.install
 
-RUN curl -sLJO "$hlds_url" \
-    && unzip "hlds_build_$hlds_build.zip" -d "/opt/steam" \
-    && cp -R "hlds_build_$hlds_build"/* hlds/ \
-    && rm -rf "hlds_build_$hlds_build" "hlds_build_$hlds_build.zip"
-
 # Fix error that steamclient.so is missing
 RUN mkdir -p "$HOME/.steam" \
     && ln -s /opt/steam/linux32 "$HOME/.steam/sdk32"
@@ -60,23 +55,41 @@ RUN mkdir -p "$HOME/.steam" \
 RUN touch /opt/steam/hlds/valve/listip.cfg
 RUN touch /opt/steam/hlds/valve/banned.cfg
 
-# Install Metamod-P
-RUN mkdir -p /opt/steam/hlds/valve/addons/metamod/dlls \
-    && touch /opt/steam/hlds/valve/addons/metamod/plugins.ini
-RUN curl -sqL "$metamod_url" | tar -C /opt/steam/hlds/valve/addons/metamod/dlls -xJ
-RUN sed -i 's/dlls\/hl\.so/addons\/metamod\/dlls\/metamod.so/g' /opt/steam/hlds/valve/liblist.gam
+# Install reverse-engineered HLDS
+RUN curl -sLJO "$rehlds_url" \
+    && unzip "rehlds-dist-$rehlds_version-dev.zip" -d "/opt/steam/rehlds" \
+    && cp -R /opt/steam/rehlds/bin/linux32/* /opt/steam/hlds/ \
+    && rm -rf "rehlds-dist-$rehlds_version-dev.zip" "/opt/steam/rehlds"
+
+# Install Metamod-r
+RUN curl -sLJO "$metamod_url" \
+    && unzip "metamod_$metamod_version.zip" -d "/opt/steam/metamod" \
+    && cp -R /opt/steam/metamod/addons /opt/steam/hlds/valve/ \
+    && rm -rf "metamod_$metamod_version.zip" "/opt/steam/metamod" \
+    && touch /opt/steam/hlds/valve/addons/metamod/plugins.ini \
+    && sed -i 's/dlls\/hl\.so/addons\/metamod\/metamod_i386\.so/g' /opt/steam/hlds/valve/liblist.gam
 
 # Install AMX mod X
 RUN curl -sqL "$amxmod_url" | tar -C /opt/steam/hlds/valve/ -zxvf - \
+    && cat /opt/steam/hlds/valve/mapcycle.txt >> /opt/steam/hlds/valve/addons/amxmodx/configs/maps.ini \
     && echo 'linux addons/amxmodx/dlls/amxmodx_mm_i386.so' >> /opt/steam/hlds/valve/addons/metamod/plugins.ini
-RUN cat /opt/steam/hlds/valve/mapcycle.txt >> /opt/steam/hlds/valve/addons/amxmodx/configs/maps.ini
 
-# Install dproto
-RUN mkdir -p /opt/steam/hlds/valve/addons/dproto
-COPY lib/dproto/bin/Linux/dproto_i386.so /opt/steam/hlds/valve/addons/dproto/dproto_i386.so
-COPY lib/dproto/dproto.cfg /opt/steam/hlds/valve/dproto.cfg
-RUN echo 'linux addons/dproto/dproto_i386.so' >> /opt/steam/hlds/valve/addons/metamod/plugins.ini
-COPY lib/dproto/amxx/* /opt/steam/hlds/valve/addons/amxmodx/scripting/
+# Install reunion
+RUN mkdir -p /opt/steam/hlds/valve/addons/reunion
+COPY lib/reunion/bin/Linux/reunion_mm_i386.so /opt/steam/hlds/valve/addons/reunion/reunion_mm_i386.so
+COPY lib/reunion/reunion.cfg /opt/steam/hlds/valve/reunion.cfg
+COPY lib/reunion/amxx/* /opt/steam/hlds/valve/addons/amxmodx/scripting/
+RUN echo 'linux addons/reunion/reunion_mm_i386.so' >> /opt/steam/hlds/valve/addons/metamod/plugins.ini \
+    && sed -i 's/Setti_Prefix1 = 5/Setti_Prefix1 = 4/g' /opt/steam/hlds/valve/reunion.cfg
+
+# Install revoice
+RUN curl -sL "$revoice_url" -o "revoice.zip" \
+    && unzip "revoice.zip" -d "/opt/steam/tmp" \
+    && unzip /opt/steam/tmp/revoice_*.zip -d "/opt/steam/revoice" \
+    && mkdir /opt/steam/hlds/valve/addons/revoice \
+    && cp /opt/steam/revoice/bin/linux32/revoice_mm_i386.so /opt/steam/hlds/valve/addons/revoice/revoice_mm_i386.so \
+    && cp /opt/steam/revoice/revoice.cfg /opt/steam/hlds/valve/addons/revoice/revoice.cfg \
+    && echo 'linux addons/revoice/revoice_mm_i386.so' >> /opt/steam/hlds/valve/addons/metamod/plugins.ini
 
 # Install jk_botti
 RUN curl -sqL "$jk_botti_url" | tar -C /opt/steam/hlds/valve/ -xJ \

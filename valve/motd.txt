@@ -1,9 +1,9 @@
-Welcome to HLDS Docker dproto(47/48)
+Welcome to reHLDS Docker reunion(47/48)
 
 
 This server uses Docker.
 For more information visit
-https://github.com/artkirienko/hlds-docker-dproto
+https://github.com/artkirienko/rehlds-docker-reunion
 
 
 
